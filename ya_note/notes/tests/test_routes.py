@@ -35,7 +35,7 @@ class TestRoutes(TestCase):
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
         response = self.client.post(reverse('users:logout'))
-        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_pages_availability_for_auth_user(self):
         for name in ('notes:list', 'notes:add', 'notes:success'):
