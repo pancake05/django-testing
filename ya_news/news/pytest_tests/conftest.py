@@ -60,21 +60,20 @@ def comment(news, author):
 def news_bulk():
     today = timezone.now().date()
     total_news = settings.NEWS_COUNT_ON_HOME_PAGE + 5
-    news_list = [
+    News.objects.bulk_create(
         News(
             title=f'News {index}',
             text='Text',
             date=today - timedelta(days=index),
         )
         for index in range(total_news)
-    ]
-    News.objects.bulk_create(news_list)
+    )
 
 
 @pytest.fixture
 def comments_bulk(news, author):
     created_base = timezone.now()
-    for index in range(2):
+    for index in range(10):
         current_comment = Comment.objects.create(
             news=news,
             author=author,
