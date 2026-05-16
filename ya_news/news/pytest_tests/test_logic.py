@@ -53,14 +53,27 @@ def test_user_cant_use_bad_words(author_client, detail_url, bad_word):
     assert Comment.objects.count() == comments_count_before
 
 
-def test_author_can_edit_comment(author_client, comment, edit_url, detail_comments_url):
-    response = author_client.post(edit_url, data={'text': UPDATED_COMMENT_TEXT})
+def test_author_can_edit_comment(
+    author_client,
+    comment,
+    edit_url,
+    detail_comments_url,
+):
+    response = author_client.post(
+        edit_url,
+        data={'text': UPDATED_COMMENT_TEXT},
+    )
     assertRedirects(response, detail_comments_url)
     updated_comment = Comment.objects.get(pk=comment.pk)
     assert updated_comment.text == UPDATED_COMMENT_TEXT
 
 
-def test_author_can_delete_comment(author_client, comment, delete_url, detail_comments_url):
+def test_author_can_delete_comment(
+    author_client,
+    comment,
+    delete_url,
+    detail_comments_url,
+):
     comments_count_before = Comment.objects.count()
     response = author_client.post(delete_url)
     assertRedirects(response, detail_comments_url)
@@ -70,14 +83,21 @@ def test_author_can_delete_comment(author_client, comment, delete_url, detail_co
 
 def test_other_user_cant_edit_comment(not_author_client, comment, edit_url):
     comments_count_before = Comment.objects.count()
-    response = not_author_client.post(edit_url, data={'text': HACK_COMMENT_TEXT})
+    response = not_author_client.post(
+        edit_url,
+        data={'text': HACK_COMMENT_TEXT},
+    )
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert Comment.objects.count() == comments_count_before
     unchanged_comment = Comment.objects.get(pk=comment.pk)
     assert unchanged_comment.text == comment.text
 
 
-def test_other_user_cant_delete_comment(not_author_client, comment, delete_url):
+def test_other_user_cant_delete_comment(
+    not_author_client,
+    comment,
+    delete_url,
+):
     comments_count_before = Comment.objects.count()
     response = not_author_client.post(delete_url)
     assert response.status_code == HTTPStatus.NOT_FOUND

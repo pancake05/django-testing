@@ -4,6 +4,7 @@ import pytest
 
 from news.forms import CommentForm
 
+
 @pytest.mark.usefixtures('news_bulk')
 def test_news_count_on_home_page(client, home_url):
     response = client.get(home_url)
