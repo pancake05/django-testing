@@ -1,47 +1,23 @@
-from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
-from django.urls import reverse
-
 from notes.forms import NoteForm
-from notes.models import Note
-
-User = get_user_model()
+from .common import ADD_URL, EDIT_URL, LIST_URL, BaseTestCase
 
 
-class TestContent(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.author = User.objects.create(username='author')
-        cls.not_author = User.objects.create(username='not_author')
-        cls.note = Note.objects.create(
-            title='Title',
-            text='Text',
-            slug='note-slug',
-            author=cls.author,
-        )
-
-    def setUp(self):
-        self.author_client = Client()
-        self.author_client.force_login(self.author)
-        self.not_author_client = Client()
-        self.not_author_client.force_login(self.not_author)
+class TestContent(BaseTestCase):
 
     def test_note_in_list_for_author(self):
-        response = self.author_client.get(reverse('notes:list'))
+        response = self.author_client.get(LIST_URL)
         self.assertIn(self.note, response.context['object_list'])
 
     def test_note_not_in_list_for_another_user(self):
-        response = self.not_author_client.get(reverse('notes:list'))
+        response = self.not_author_client.get(LIST_URL)
         self.assertNotIn(self.note, response.context['object_list'])
 
     def test_pages_contains_form(self):
-        names_with_args = (
-            ('notes:add', None),
-            ('notes:edit', (self.note.slug,)),
+        urls = (
+            ADD_URL,
+            EDIT_URL,
         )
-        for name, args in names_with_args:
-            with self.subTest(name=name):
-                response = self.author_client.get(reverse(name, args=args))
-                self.assertIn('form', response.context)
-                self.assertIsInstance(response.context['form'], NoteForm)
+        for url in urls:
+            with self.subTest(url=url):
+                response = self.author_client.get(url)
+                self.assertIsInstance(response.context.get('form'), NoteForm)

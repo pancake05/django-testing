@@ -1,11 +1,17 @@
 from datetime import timedelta
 
 import pytest
+from django.conf import settings
 from django.test import Client
+from django.urls import reverse
 from django.utils import timezone
 
-from news.forms import BAD_WORDS
 from news.models import Comment, News
+
+
+@pytest.fixture(autouse=True)
+def enable_db_access_for_all_tests(db):
+    pass
 
 
 @pytest.fixture
@@ -51,38 +57,68 @@ def comment(news, author):
 
 
 @pytest.fixture
-def comment_form_data():
-    return {'text': 'New comment text'}
-
-
-@pytest.fixture
-def bad_comment_form_data():
-    return {'text': f'????? ? ??????????? ?????? {BAD_WORDS[0]}'}
-
-
-@pytest.fixture
 def news_bulk():
     today = timezone.now().date()
+    total_news = settings.NEWS_COUNT_ON_HOME_PAGE + 5
     news_list = [
         News(
             title=f'News {index}',
             text='Text',
             date=today - timedelta(days=index),
         )
-        for index in range(15)
+        for index in range(total_news)
     ]
     News.objects.bulk_create(news_list)
-    return News.objects.order_by('-date')
 
 
 @pytest.fixture
 def comments_bulk(news, author):
-    first = Comment.objects.create(news=news, author=author, text='First')
-    second = Comment.objects.create(news=news, author=author, text='Second')
-    Comment.objects.filter(pk=first.pk).update(
-        created=timezone.now() - timedelta(days=1)
-    )
-    Comment.objects.filter(pk=second.pk).update(created=timezone.now())
-    first.refresh_from_db()
-    second.refresh_from_db()
-    return first, second
+    created_base = timezone.now()
+    for index in range(2):
+        current_comment = Comment.objects.create(
+            news=news,
+            author=author,
+            text=f'Comment {index}',
+        )
+        current_comment.created = created_base + timedelta(seconds=index)
+        current_comment.save(update_fields=['created'])
+
+
+@pytest.fixture
+def home_url():
+    return reverse('news:home')
+
+
+@pytest.fixture
+def login_url():
+    return reverse('users:login')
+
+
+@pytest.fixture
+def logout_url():
+    return reverse('users:logout')
+
+
+@pytest.fixture
+def signup_url():
+    return reverse('users:signup')
+
+
+@pytest.fixture
+def detail_url(news):
+    return reverse('news:detail', args=(news.pk,))
+
+
+@pytest.fixture
+def detail_comments_url(news):
+    return f"{reverse('news:detail', args=(news.pk,))}#comments"
+
+
+@pytest.fixture
+def edit_url(comment):
+    return reverse('news:edit', args=(comment.pk,))
+
+
+@pytest.fixture
+def delete_url(comment):
+    return reverse('news:delete', args=(comment.pk,))
